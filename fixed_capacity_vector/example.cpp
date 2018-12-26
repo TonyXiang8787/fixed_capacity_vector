@@ -31,5 +31,7 @@ int main()
 	vec2.emplace_back(10, 9.0);
 	std::cout << vec2.size() << '\n';
 	std::cout << vec2.capacity() << '\n';
+	C const* ptr = vec2.data();
+	std::cout << ptr[0].c << ptr[1].c << '\n';
 }
 

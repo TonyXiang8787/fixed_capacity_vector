@@ -34,6 +34,8 @@ public:
 	{ return reinterpret_cast<T const&>(data_[i]); }
 	size_t size() const { return size_; }
 	size_t capacity() const { return capacity_; }
+	T* data() { return reinterpret_cast<T*>(data_.get()); }
+	T const* data() const { return reinterpret_cast<T const*>(data_.get()); }
 private:
 	size_t const capacity_;
 	std::unique_ptr<StorageType[]> const data_;
