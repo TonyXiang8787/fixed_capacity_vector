@@ -27,8 +27,8 @@ int main()
 	}
 
 	FixedCapacityVector<C> vec2{ 3 };
-	vec2.emplace_back(2, 5.0);
-	vec2.emplace_back(10, 9.0);
+	vec2.emplace_back(2, 5.0).c = 'o';
+	vec2.emplace_back(10, 9.0).c = 'z';
 	std::cout << vec2.size() << '\n';
 	std::cout << vec2.capacity() << '\n';
 	C const* ptr = vec2.data();

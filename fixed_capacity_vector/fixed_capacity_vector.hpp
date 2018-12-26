@@ -24,9 +24,8 @@ public:
 	{
 		if (size_ == capacity_)
 			throw std::bad_alloc{};
-		T* ptr = new (&data_[size_]) T{ std::forward<Args>(args)... };
-		size_++;
-		return *ptr;
+		new (&data_[size_]) T{ std::forward<Args>(args)... };
+		return *reinterpret_cast<T*>(data_.get() + (size_++));
 	}
 	T& operator[](size_t i) 
 	{ return reinterpret_cast<T&>(data_[i]); }
