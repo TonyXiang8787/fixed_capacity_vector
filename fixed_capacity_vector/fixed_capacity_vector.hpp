@@ -7,6 +7,7 @@ class FixedCapacityVector {
 private:
 	using StorageType = std::aligned_storage_t<sizeof(T), alignof(T)>;
 	static_assert(sizeof(StorageType) == sizeof(T));
+	static_assert(alignof(StorageType) == alignof(T));
 public:
 	FixedCapacityVector(FixedCapacityVector const&) = delete;
 	FixedCapacityVector& operator=(FixedCapacityVector const&) = delete;
