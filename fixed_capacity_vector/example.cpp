@@ -40,5 +40,9 @@ int main()
 	{
 		std::cout << item.b << '\n';
 	}
+	for (auto it = vec2.cbegin(); it != vec2.cend(); it++)
+	{
+		C const& item = *it;
+		std::cout << item.a << '\n';
+	}
 }
-

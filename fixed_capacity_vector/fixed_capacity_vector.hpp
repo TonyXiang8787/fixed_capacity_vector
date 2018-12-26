@@ -39,7 +39,9 @@ public:
 	T* begin() { return data(); }
 	T* end() { return data() + size_; }
 	T const* begin() const { return data(); }
+	T const* cbegin() const { return begin(); }
 	T const* end() const { return data() + size_; }
+	T const* cend() const { return end(); }
 private:
 	size_t const capacity_;
 	std::unique_ptr<StorageType[]> const data_;
