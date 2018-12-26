@@ -1,20 +1,34 @@
-// fixed_capacity_vector.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
+#include "fixed_capacity_vector.hpp"
+
+struct C {
+	C(C const&) = delete;
+	C& operator=(C const&) = delete;
+
+	C(int x, double y): a{x}, b{y}
+	{}
+	~C() {
+		std::cout << a << ", " << b << " destroyed!\n";
+	}
+	int a;
+	double b;
+};
 
 int main()
 {
-    std::cout << "Hello World!\n"; 
+	FixedCapacityVector<int> vec1{ 1 };
+	vec1.emplace_back(5);
+	try {
+		vec1.emplace_back(6);
+	}
+	catch (std::bad_alloc &) { 
+		std::cout << "Capacity reached limit\n";
+	}
+
+	FixedCapacityVector<C> vec2{ 3 };
+	vec2.emplace_back(2, 5.0);
+	vec2.emplace_back(10, 9.0);
+	std::cout << vec2.size() << '\n';
+	std::cout << vec2.capacity() << '\n';
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
