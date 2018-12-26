@@ -12,6 +12,7 @@ struct C {
 	}
 	int a;
 	double b;
+	char c{ 'x' };
 };
 
 int main()
