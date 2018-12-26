@@ -31,12 +31,14 @@ int main()
 	vec2.emplace_back(10, 9.0).c = 'z';
 	std::cout << vec2.size() << '\n';
 	std::cout << vec2.capacity() << '\n';
-	C const* ptr = vec2.data();
-	
-
 	for (C & item : vec2)
 	{
 		std::cout << item.c << '\n';
+	}
+	auto const& vec3 = vec2;
+	for (C const & item : vec3)
+	{
+		std::cout << item.b << '\n';
 	}
 }
 
