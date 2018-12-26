@@ -32,6 +32,11 @@ int main()
 	std::cout << vec2.size() << '\n';
 	std::cout << vec2.capacity() << '\n';
 	C const* ptr = vec2.data();
-	std::cout << ptr[0].c << ptr[1].c << '\n';
+	
+
+	for (C & item : vec2)
+	{
+		std::cout << item.c << '\n';
+	}
 }
 
