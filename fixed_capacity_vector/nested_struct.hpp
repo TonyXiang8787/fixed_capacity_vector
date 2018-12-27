@@ -5,23 +5,17 @@
 #include <cstddef>
 #include <array>
 #include <utility>
+#include <vector>
 
 using EnumType = int32_t;
 
 enum class DType : EnumType {
 	kD = 0,
-	kInt32,
-	kInt8,
-	kInt,
-	kInt16
+	kInt32 = 100,
+	kInt8 = 31,
+	kInt = 29,
+	kInt16 = -5
 };
-inline constexpr DType prev(DType dtype) {
-	return static_cast<DType>(
-		static_cast<EnumType>(dtype) - 1); }
-inline constexpr DType next(DType dtype) {
-	return static_cast<DType>(
-		static_cast<EnumType>(dtype) + 1);
-}
 
 constexpr std::array<DType, 5> data_type_arr {
 	DType::kD,
@@ -47,26 +41,48 @@ struct EnumMap<dtype,
 template<DType dtype>
 using EnumMapT = typename EnumMap<dtype>::type;
 
-template<DType dtype, class = void> struct VSize;
-template<DType dtype>
-struct VSize<dtype, std::enable_if_t<dtype == data_type_arr.front()>> { 
-	size_t size_; };
-template<DType dtype>
-struct VSize<dtype, std::enable_if_t<dtype != data_type_arr.front()>> : 
-	VSize<prev(dtype)> { size_t size_; };
-struct VSizeT : VSize<data_type_arr.back()> {
+template <DType dtype>
+struct InputVec {
+	std::vector<EnumMapT<dtype>> vec;
+};
+
+template <DType...dtypes>
+class Input {
+public:
 	template<DType dtype>
-	size_t& size() { return static_cast<VSize<dtype> *>(this)->size_; }
+	std::vector<EnumMapT<dtype>> & get_vec() {
+		return std::get<InputVec<dtype>>(vectors_).vec;
+	}
+	template<DType dtype>
+	std::vector<EnumMapT<dtype>> const& get_vec() const {
+		return std::get<InputVec<dtype>>(vectors_).vec;
+	}
+private:
+	std::tuple<InputVec<dtypes>...> vectors_;
 };
 
-template <DType...>
-struct haha {};
+template <DType dtype>
+struct InternalVec {
+	FixedCapacityVector<EnumMapT<dtype>> vec;
+};
 
-template<class> struct hoho;
-template<EnumType...Ints>
-struct hoho<std::integer_sequence<EnumType, Ints...>>
+template <DType...dtypes>
+class Internal {
+public:
+	Internal(Input<dtypes...> const& input) :
+		vectors_{ input.get_vec<dtypes>().size()... }
+	{ }
+private:
+	std::tuple<FixedCapacityVector<EnumMapT<dtypes>>...> vectors_;
+};
+
+template<class> struct TypeTrait;
+template<size_t...Ints>
+struct TypeTrait<std::index_sequence<Ints...>>
 {
-	using haha_t = haha<static_cast<DType>(Ints)...>;
+	using InputMap = Input<data_type_arr[Ints]...>;
+	using InternalMap = Internal<data_type_arr[Ints]...>;
 };
 
-using hoho_t = typename hoho<std::make_integer_sequence<EnumType, data_type_arr.size()>>::haha_t;
+using InputMap = typename TypeTrait<std::make_index_sequence<data_type_arr.size()>>::InputMap;
+using InternalMap = typename TypeTrait<std::make_index_sequence<data_type_arr.size()>>::InternalMap;

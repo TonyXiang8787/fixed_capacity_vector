@@ -4,7 +4,7 @@
 int main()
 {
 	test_vector();
-	VSizeT v_size;
-	v_size.size<DType::kInt8>() = 5;
-	hoho_t hoho_o;
+	InputMap input_map;
+	input_map.get_vec<DType::kInt>().resize(5);
+	InternalMap internal_map{ input_map };
 }
