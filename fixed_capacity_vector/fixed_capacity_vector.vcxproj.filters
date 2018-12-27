@@ -21,6 +21,9 @@
     <ClInclude Include="test_func.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="nested_struct.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="example.cpp">

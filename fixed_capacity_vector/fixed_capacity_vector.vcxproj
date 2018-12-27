@@ -91,6 +91,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fixed_capacity_vector.hpp" />
+    <ClInclude Include="nested_struct.hpp" />
     <ClInclude Include="test_func.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
