@@ -4,8 +4,11 @@
 #include <type_traits>
 #include <cstddef>
 #include <array>
+#include <utility>
 
-enum class DType : int32_t {
+using EnumType = int32_t;
+
+enum class DType : EnumType {
 	kD = 0,
 	kInt32,
 	kInt8,
@@ -14,10 +17,10 @@ enum class DType : int32_t {
 };
 inline constexpr DType prev(DType dtype) {
 	return static_cast<DType>(
-		static_cast<std::underlying_type_t<DType>>(dtype) - 1); }
+		static_cast<EnumType>(dtype) - 1); }
 inline constexpr DType next(DType dtype) {
 	return static_cast<DType>(
-		static_cast<std::underlying_type_t<DType>>(dtype) + 1);
+		static_cast<EnumType>(dtype) + 1);
 }
 
 constexpr std::array<DType, 5> data_type_arr {
@@ -55,3 +58,15 @@ struct VSizeT : VSize<data_type_arr.back()> {
 	template<DType dtype>
 	size_t& size() { return static_cast<VSize<dtype> *>(this)->size_; }
 };
+
+template <DType...>
+struct haha {};
+
+template<class> struct hoho;
+template<EnumType...Ints>
+struct hoho<std::integer_sequence<EnumType, Ints...>>
+{
+	using haha_t = haha<static_cast<DType>(Ints)...>;
+};
+
+using hoho_t = typename hoho<std::make_integer_sequence<EnumType, data_type_arr.size()>>::haha_t;
