@@ -6,6 +6,7 @@
 #include <array>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 using EnumType = int32_t;
 
@@ -25,6 +26,12 @@ constexpr std::array<DType, 5> data_type_arr {
 	DType::kInt16
 };
 
+inline constexpr size_t find_type_ind(DType dtype)
+{
+	std::distance(data_type_arr.begin(), 
+		std::find(data_type_arr.begin(), data_type_arr.end(), dtype));
+}
+
 template<DType dtype, class = void> struct EnumMap;
 template<> struct EnumMap<DType::kD> {
 	using type = double; };
@@ -41,35 +48,25 @@ struct EnumMap<dtype,
 template<DType dtype>
 using EnumMapT = typename EnumMap<dtype>::type;
 
-template <DType dtype>
-struct InputVec {
-	std::vector<EnumMapT<dtype>> vec;
-};
-
 template <DType...dtypes>
 class Input {
 public:
 	template<DType dtype>
 	std::vector<EnumMapT<dtype>> & get_vec() {
-		return std::get<InputVec<dtype>>(vectors_).vec;
+		return std::get<find_type_ind(dtype)>(vectors_);
 	}
 	template<DType dtype>
 	std::vector<EnumMapT<dtype>> const& get_vec() const {
-		return std::get<InputVec<dtype>>(vectors_).vec;
+		return std::get<find_type_ind(dtype)>(vectors_);
 	}
 private:
-	std::tuple<InputVec<dtypes>...> vectors_;
-};
-
-template <DType dtype>
-struct InternalVec {
-	FixedCapacityVector<EnumMapT<dtype>> vec;
+	std::tuple<std::vector<EnumMapT<dtypes>>...> vectors_;
 };
 
 template <DType...dtypes>
 class Internal {
 public:
-	Internal(Input<dtypes...> const& input) :
+	Internal(Input<dtypes...> const& input):
 		vectors_{ input.get_vec<dtypes>().size()... }
 	{ }
 private:
