@@ -26,24 +26,18 @@ constexpr std::array<DType, 5> data_type_arr {
 	DType::kInt16
 };
 
-template <DType dtype, DType... dtypes> struct get_index;
-template <DType dtype, DType... dtypes>
-struct get_index<dtype, dtype, dtypes...> : std::integral_constant<size_t, 0> {};
-template <DType dtype, DType dtype_other, DType... dtypes>
-struct get_index<dtype, dtype_other, dtypes...> :
-	std::integral_constant<std::size_t, 1 + get_index<dtype, dtypes...>::value> {};
-template <DType dtype, DType... dtypes>
-constexpr size_t get_index_v = get_index<dtype, dtypes...>::value;
-
 template<DType dtype, class = void> struct EnumMap;
 template<> struct EnumMap<DType::kD> {
-	using type = double; };
+	using type = double;
+};
 template<> struct EnumMap<DType::kInt8> {
-	using type = int8_t; };
+	using type = int8_t;
+};
 template<> struct EnumMap<DType::kInt16> {
-	using type = int16_t; };
-template<DType dtype> 
-struct EnumMap<dtype, 
+	using type = int16_t;
+};
+template<DType dtype>
+struct EnumMap<dtype,
 	std::enable_if_t<dtype == DType::kInt32 || dtype == DType::kInt>>
 {
 	using type = int32_t;
@@ -51,15 +45,22 @@ struct EnumMap<dtype,
 template<DType dtype>
 using EnumMapT = typename EnumMap<dtype>::type;
 
-
-
 template<class> struct TypeTrait;
 template<size_t...Ints>
 struct TypeTrait<std::index_sequence<Ints...>>
 {
 private:
+	template <DType dtype, DType... dtypes> struct get_index;
+	template <DType dtype, DType... dtypes>
+	struct get_index<dtype, dtype, dtypes...> : 
+		std::integral_constant<size_t, 0> {};
+	template <DType dtype, DType dtype_other, DType... dtypes>
+	struct get_index<dtype, dtype_other, dtypes...> :
+		std::integral_constant<std::size_t, 
+		1 + get_index<dtype, dtypes...>::value> {};
 	template<DType dtype>
-	static constexpr size_t dtype_index = get_index_v<dtype, data_type_arr[Ints]...>;
+	static constexpr size_t dtype_index = 
+		get_index<dtype, data_type_arr[Ints]...>::value;
 
 	class Input {
 	public:
@@ -88,5 +89,7 @@ public:
 	using InternalMap = Internal;
 };
 
-using InputMap = typename TypeTrait<std::make_index_sequence<data_type_arr.size()>>::InputMap;
-using InternalMap = typename TypeTrait<std::make_index_sequence<data_type_arr.size()>>::InternalMap;
+using InputMap = typename TypeTrait<
+	std::make_index_sequence<data_type_arr.size()>>::InputMap;
+using InternalMap = typename TypeTrait<
+	std::make_index_sequence<data_type_arr.size()>>::InternalMap;
