@@ -11,7 +11,7 @@ private:
 public:
 	FixedCapacityVector(FixedCapacityVector const&) = delete;
 	FixedCapacityVector& operator=(FixedCapacityVector const&) = delete;
-	FixedCapacityVector(size_t capacity = 0):
+	FixedCapacityVector(size_t capacity):
 		capacity_{ capacity },
 		data_{ std::make_unique<StorageType[]>(capacity) }
 	{ }
