@@ -50,17 +50,17 @@ template<size_t...Ints>
 struct TypeTrait<std::index_sequence<Ints...>>
 {
 private:
-	template <DType dtype, DType... dtypes> struct get_index;
-	template <DType dtype, DType... dtypes>
-	struct get_index<dtype, dtype, dtypes...> : 
+	template <DType d, DType... ds> struct get_index;
+	template <DType d, DType... ds>
+	struct get_index<d, d, ds...> : 
 		std::integral_constant<size_t, 0> {};
-	template <DType dtype, DType dtype_other, DType... dtypes>
-	struct get_index<dtype, dtype_other, dtypes...> :
+	template <DType d, DType d2, DType... ds>
+	struct get_index<d, d2, ds...> :
 		std::integral_constant<std::size_t, 
-		1 + get_index<dtype, dtypes...>::value> {};
-	template<DType dtype>
+		1 + get_index<d, ds...>::value> {};
+	template<DType d>
 	static constexpr size_t dtype_index = 
-		get_index<dtype, data_type_arr[Ints]...>::value;
+		get_index<d, data_type_arr[Ints]...>::value;
 
 	class Input {
 	public:
@@ -87,9 +87,14 @@ private:
 public:
 	using InputMap = Input;
 	using InternalMap = Internal;
+
+	static void resize_input(InputMap & input_map, size_t size) {
+		(input_map.get_vec<data_type_arr[Ints]>().resize(size), ... );
+	}
 };
 
 using InputMap = typename TypeTrait<
 	std::make_index_sequence<data_type_arr.size()>>::InputMap;
 using InternalMap = typename TypeTrait<
 	std::make_index_sequence<data_type_arr.size()>>::InternalMap;
+using Root = TypeTrait<std::make_index_sequence<data_type_arr.size()>>;
