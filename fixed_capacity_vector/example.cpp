@@ -5,5 +5,5 @@ int main()
 {
 	test_vector();
 	VSizeT v_size;
-	((VSize<DType::kInt8>&)v_size).size = 5;
+	v_size.size<DType::kInt8>() = 5;
 }

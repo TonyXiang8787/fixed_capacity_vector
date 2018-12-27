@@ -46,10 +46,16 @@ using EnumMapT = typename EnumMap<dtype>::type;
 
 template<DType dtype, class = void> struct VSize;
 template<DType dtype>
-struct VSize<dtype, std::enable_if_t<dtype == data_type_arr.front()>> { size_t size; };
+struct VSize<dtype, std::enable_if_t<dtype == data_type_arr.front()>> { 
+	size_t size_; 
+	template<DType dtype>
+	size_t& size() {
+		return ((VSize<dtype> *)this)->size_;
+	}
+};
 template<DType dtype>
 struct VSize<dtype, std::enable_if_t<dtype != data_type_arr.front()>> : 
 	VSize<prev(dtype)> {
-	size_t size;
+	size_t size_;
 };
 using VSizeT = VSize<data_type_arr.back()>;
