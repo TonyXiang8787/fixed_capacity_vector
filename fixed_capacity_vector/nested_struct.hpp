@@ -75,14 +75,21 @@ public:
 	};
 	template<class TNew, class... UN>
 	struct add_unique<TNew, typelist<UN...>, false> {
-		using type = typelist<TNew, UN...>; 
+		using type = typelist<UN..., TNew>; 
 	};
-
-	//template<class> struct unique_type_list;
-	//template<> 
-	//struct unique_type_list<typelist<>> {
-	//	using type = typelist<>;
-	//};
+	// calculate unique types
+	template<class TList1, class TList2 = typelist<>> struct unique_type_list {};
+	template<class... TR>
+	struct unique_type_list<typelist<>, typelist<TR...>> {
+		using type = typelist<TR...>;
+	};
+	template<class T0, class... TN, class... TR>
+	struct unique_type_list<typelist<T0, TN...>, typelist<TR...>> {
+		using type = typename unique_type_list<
+			typelist<TN...>, 
+			typename add_unique<T0, typelist<TR...>>::type
+		>::type;
+	};
 
 private:
 
