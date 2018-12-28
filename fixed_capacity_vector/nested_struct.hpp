@@ -49,15 +49,41 @@ template<DType...dtypes>
 struct TypeBase
 {
 private:
+	// get index of enum
 	template <DType d, DType... ds> struct get_index;
 	template <DType d, DType... ds>
 	struct get_index<d, d, ds...> : std::integral_constant<size_t, 0> {};
 	template <DType d, DType d2, DType... ds>
 	struct get_index<d, d2, ds...> :
-		std::integral_constant<std::size_t, + get_index<d, ds...>::value> {};
+		std::integral_constant<std::size_t, 1 + get_index<d, ds...>::value> {};
 	template<DType d>
 	static constexpr size_t dtype_index = 
 		get_index<d, dtypes...>::value;
+
+public:
+	// is one of types
+	template<class...> struct typelist;
+	template<class T, class TList> struct is_one_of;
+	template<class T> 
+	struct is_one_of<T, typelist<>> : std::false_type { };
+	template<class T, class... UN> 
+	struct is_one_of<T, typelist<T, UN...>> : std::true_type { };
+	template<class T, class U0, class... UN>
+	struct is_one_of<T, typelist<U0, UN...>> : is_one_of<T, typelist<UN...>> { };
+	// add if unique
+	template<class TNew, class TList, 
+		bool = typename is_one_of<TNew, TList>::value> struct add_unique;
+	template<class TNew, class... UN>
+	struct add_unique<TNew, typelist <UN...>, true> {
+		using type = typelist <UN...>;
+	};
+	template<class TNew, typename... UN>
+	struct add_unique<TNew, typelist<UN...>, false>
+	{
+		using type = typelist<TNew, UN...>;
+	};
+
+private:
 
 	class Input {
 	public:
