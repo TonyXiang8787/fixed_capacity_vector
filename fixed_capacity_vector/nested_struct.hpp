@@ -6,6 +6,7 @@
 #include <array>
 #include <utility>
 #include <vector>
+#include <unordered_map>
 #include <algorithm>
 
 using EnumType = int32_t;
@@ -44,7 +45,6 @@ private:
 	};
 	template<DType dtype>
 	using enum_map_t = typename enum_map<dtype>::type;
-
 	// get index of enum
 	template <DType d, DType... ds> struct get_index;
 	template <DType d, DType... ds>
@@ -55,8 +55,6 @@ private:
 	template<DType d>
 	static constexpr size_t dtype_index = 
 		get_index<d, dtypes...>::value;
-
-public:
 	// is one of types
 	template<class...> struct typelist;
 	template<class T, class TList> struct is_one_of;
@@ -91,8 +89,6 @@ public:
 		>::type;
 	};
 
-private:
-
 	class Input {
 	public:
 		template<DType dtype>
@@ -107,6 +103,15 @@ private:
 		std::tuple<std::vector<enum_map_t<dtypes>>...> vectors_;
 	};
 
+
+	// get map class
+	template<class...> struct map_traits;
+	template<class... T> struct map_traits<typelist<T...>> {
+		using type = std::tuple<std::unordered_map<int32_t, T>...>;
+	};
+	using ComponentMaps = typename map_traits<
+		typename unique_type_list<typelist<enum_map_t<dtypes>...>>::type>::type;
+
 	class Internal {
 	public:
 		Internal(Input const& input) :
@@ -114,6 +119,7 @@ private:
 		{ }
 	private:
 		std::tuple<FixedCapacityVector<enum_map_t<dtypes>>...> vectors_;
+		ComponentMaps maps_;
 	};
 public:
 	using InputMap = Input;
