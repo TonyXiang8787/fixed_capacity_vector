@@ -26,29 +26,25 @@ constexpr std::array<DType, 5> data_type_arr {
 	DType::kInt16
 };
 
-template<DType dtype, class = void> struct EnumMap;
-template<> struct EnumMap<DType::kD> {
-	using type = double;
-};
-template<> struct EnumMap<DType::kInt8> {
-	using type = int8_t;
-};
-template<> struct EnumMap<DType::kInt16> {
-	using type = int16_t;
-};
-template<DType dtype>
-struct EnumMap<dtype,
-	std::enable_if_t<dtype == DType::kInt32 || dtype == DType::kInt>>
-{
-	using type = int32_t;
-};
-template<DType dtype>
-using EnumMapT = typename EnumMap<dtype>::type;
+
 
 template<DType...dtypes>
 struct TypeBase
 {
 private:
+	// get type by enum
+	template<DType dtype, class = void> struct enum_map { };
+	template<> struct enum_map<DType::kD> { using type = double; };
+	template<> struct enum_map<DType::kInt8> { using type = int8_t; };
+	template<> struct enum_map<DType::kInt16> { using type = int16_t; };
+	template<DType dtype>
+	struct enum_map<dtype,
+		std::enable_if_t<dtype == DType::kInt32 || dtype == DType::kInt>> {
+		using type = int32_t;
+	};
+	template<DType dtype>
+	using enum_map_t = typename enum_map<dtype>::type;
+
 	// get index of enum
 	template <DType d, DType... ds> struct get_index;
 	template <DType d, DType... ds>
@@ -72,31 +68,36 @@ public:
 	struct is_one_of<T, typelist<U0, UN...>> : is_one_of<T, typelist<UN...>> { };
 	// add if unique
 	template<class TNew, class TList, 
-		bool = typename is_one_of<TNew, TList>::value> struct add_unique;
+		bool = is_one_of<TNew, TList>::value> struct add_unique { };
 	template<class TNew, class... UN>
 	struct add_unique<TNew, typelist <UN...>, true> {
-		using type = typelist <UN...>;
+		using type = typelist<UN...>; 
 	};
-	template<class TNew, typename... UN>
-	struct add_unique<TNew, typelist<UN...>, false>
-	{
-		using type = typelist<TNew, UN...>;
+	template<class TNew, class... UN>
+	struct add_unique<TNew, typelist<UN...>, false> {
+		using type = typelist<TNew, UN...>; 
 	};
+
+	//template<class> struct unique_type_list;
+	//template<> 
+	//struct unique_type_list<typelist<>> {
+	//	using type = typelist<>;
+	//};
 
 private:
 
 	class Input {
 	public:
 		template<DType dtype>
-		std::vector<EnumMapT<dtype>> & get_vec() {
+		std::vector<enum_map_t<dtype>> & get_vec() {
 			return std::get<dtype_index<dtype>>(vectors_);
 		}
 		template<DType dtype>
-		std::vector<EnumMapT<dtype>> const& get_vec() const {
+		std::vector<enum_map_t<dtype>> const& get_vec() const {
 			return std::get<dtype_index<dtype>>(vectors_);
 		}
 	private:
-		std::tuple<std::vector<EnumMapT<dtypes>>...> vectors_;
+		std::tuple<std::vector<enum_map_t<dtypes>>...> vectors_;
 	};
 
 	class Internal {
@@ -105,7 +106,7 @@ private:
 			vectors_{ input.get_vec<dtypes>().size()... }
 		{ }
 	private:
-		std::tuple<FixedCapacityVector<EnumMapT<dtypes>>...> vectors_;
+		std::tuple<FixedCapacityVector<enum_map_t<dtypes>>...> vectors_;
 	};
 public:
 	using InputMap = Input;
