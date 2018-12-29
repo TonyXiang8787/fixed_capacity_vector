@@ -114,7 +114,7 @@ namespace internal_trait {
 		class Internal {
 		public:
 			Internal(Input const& input) :
-				vectors_{ (input.get_vec<dtypes>()).size()... }
+				vectors_{ input.template get_vec<dtypes>().size()... }
 			{ }
 		private:
 			std::tuple<FixedCapacityVector<enum_map_t<dtypes>>...> vectors_;
@@ -125,7 +125,7 @@ namespace internal_trait {
 		using InternalMap = Internal;
 
 		static void resize_input(InputMap & input_map, size_t size) {
-			((input_map.get_vec<dtypes>()).resize(size), ...);
+			(input_map.template get_vec<dtypes>().resize(size), ...);
 		}
 	};
 
