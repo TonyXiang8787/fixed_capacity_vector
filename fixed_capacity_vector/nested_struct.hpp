@@ -138,7 +138,7 @@ struct TypeTrait<std::index_sequence<Ints...>> {
 
 }
 
-using Root = typename internal_trait::TypeTrait<
+using Root = internal_trait::TypeTrait<
 	std::make_index_sequence<data_type_arr.size()>>::TypeBaseT;
 using InputMap = Root::InputMap;
 using InternalMap = Root::InternalMap;
