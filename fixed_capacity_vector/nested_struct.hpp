@@ -65,6 +65,10 @@ template<DType dtype>
 using input_vector_t = std::vector<InputPair<enum_t<dtype>>>;
 template<DType dtype>
 using map_t = std::unordered_map<IDType, enum_t<dtype>*>;
+template<class T, DType dtype>
+constexpr bool is_match = (
+	std::is_same<enum_t<dtype>, T>::value ||
+	std::is_base_of<T, enum_t<dtype>>::value);
 
 // get index of enum
 template <DType d, DType... ds> struct get_index;
@@ -80,6 +84,7 @@ private:
 	template<DType d>
 	static constexpr size_t dtype_index =
 		get_index<d, dtypes...>::value;
+
 
 	class Input {
 	public:
@@ -134,11 +139,16 @@ private:
 		map_t<dtype> & get_map() {
 			return std::get<dtype_index<dtype>>(maps_);
 		}
+
+		template<class T, class Func>
+		void for_each(Func func) {
+			(for_each<T, dtypes, Func>(func), ...);
+		}
 	private:
 		std::tuple<fixed_vector_t<dtypes>...> vectors_;
 		std::tuple<map_t<dtypes>...> maps_;
 
-		// build item and get item
+		// build, get, for_each, per category
 		template<DType dtype>
 		void build_item(Input const& input) {
 			using T = enum_t<dtype>;
@@ -146,8 +156,8 @@ private:
 			using TMap = map_t<dtype>;
 			input_vector_t<dtype> const& input_vec =
 				input.template get_vec<dtype>();
-			TVector & internal_vec = get_vec<dtype>();
-			TMap & internal_map = get_map<dtype>();
+			TVector& internal_vec = get_vec<dtype>();
+			TMap& internal_map = get_map<dtype>();
 			for (auto & input_pair : input_vec) {
 				internal_map.insert(
 					{ input_pair.key,
@@ -159,9 +169,7 @@ private:
 		T* get_item(IDType key, size_t& index, size_t& found_index) {
 			index++;
 			if (found_index < ull_max) return nullptr;
-			if constexpr (
-				std::is_same<enum_t<dtype>, T>::value ||
-				std::is_base_of<T, enum_t<dtype>>::value) {
+			if constexpr (is_match<T, dtype>) {
 				auto & comp_map = std::get<dtype_index<dtype>>(maps_);
 				auto iter = comp_map.find(key);
 				if (iter != comp_map.end()) {
@@ -171,7 +179,14 @@ private:
 			}
 			return nullptr;
 		}
-
+		template<class T, DType dtype, class Func>
+		void for_each(Func func) {
+			if constexpr (is_match<T, dtype>) {
+				fixed_vector_t<dtype>& vec = get_vec<dtype>();
+				for (T& item : vec)
+					func(item);
+			}
+		}
 	};
 
 public:
