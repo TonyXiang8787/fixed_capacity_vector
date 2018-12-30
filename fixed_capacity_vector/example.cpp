@@ -58,6 +58,8 @@ void test_struct() {
 
 	std::cout << "***********Test compile time struct*********\n";
 	std::cout << found << '\n';
+	std::cout << internal_map.get_item<DType::kInt32>(5) << '\n';
+
 }
 
 int main()

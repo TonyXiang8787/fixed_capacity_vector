@@ -82,27 +82,30 @@ private:
 		T* get_item(int32_t key) {
 			size_t index{ 0 }, found_index{ ULLONG_MAX };
 			std::array<T*, sizeof...(dtypes)> found_arr = { 
-				get_item_single<dtypes, T>(key, index, found_index)... };
-			if (found_index < ULLONG_MAX)
-				return found_arr[found_index];
-			else
-				return nullptr;
+				get_item<T, dtypes>(key, index, found_index)... };
+			if (found_index < ULLONG_MAX) return found_arr[found_index];
+			else return nullptr;
 		}
-
-		template<DType dtype, class T>
-		T* get_item_single(int32_t key, size_t& index, size_t& found_index) { 
+		template<DType dtype>
+		enum_map_t<dtype>* get_item(int32_t key) {
+			using T = enum_map_t<dtype>;
+			size_t index{ 0 }, found_index{ ULLONG_MAX };
+			T* ptr = get_item<T, dtype>(key, index, found_index);
+			if (ptr) return ptr;
+			else return nullptr;
+		}
+		template<class T, DType dtype>
+		T* get_item(int32_t key, size_t& index, size_t& found_index) { 
 			index++;
 			if (found_index < ULLONG_MAX) return nullptr;
 			if constexpr (
 				std::is_same<enum_map_t<dtype>, T>::value ||
-				std::is_base_of<enum_map_t<dtype>, T>::value)
-			{
+				std::is_base_of<enum_map_t<dtype>, T>::value) {
 				auto & comp_map = std::get<dtype_index<dtype>>(maps_);
 				auto iter = comp_map.find(key);
-				if (iter != comp_map.end())
-				{
+				if (iter != comp_map.end())	{
 					found_index = index - 1;
-					return iter->second;
+					return iter->second; 
 				}
 			}
 			return nullptr;
