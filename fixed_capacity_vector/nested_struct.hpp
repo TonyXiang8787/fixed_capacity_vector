@@ -13,20 +13,28 @@
 using EnumType = int32_t;
 using IDType = int32_t;
 
+struct C { int x; };
+struct C1 : C {	double y; };
+struct C2 : C { int64_t y; };
+
 enum class DType : EnumType {
 	kD = 0,
 	kInt32 = 100,
 	kInt8 = 31,
 	kInt = 29,
-	kInt16 = -5
+	kInt16 = -5,
+	kC1 = 1000,
+	kC2 = -200
 };
 
-constexpr std::array<DType, 5> data_type_arr {
+constexpr std::array<DType, 7> data_type_arr{
 	DType::kD,
 	DType::kInt32,
 	DType::kInt8,
 	DType::kInt,
-	DType::kInt16
+	DType::kInt16,
+	DType::kC1,
+	DType::kC2
 };
 
 template<class T>
@@ -42,6 +50,8 @@ template<DType dtype, class = void> struct enum_map;
 template<> struct enum_map<DType::kD> { using type = double; };
 template<> struct enum_map<DType::kInt8> { using type = int8_t; };
 template<> struct enum_map<DType::kInt16> { using type = int16_t; };
+template<> struct enum_map<DType::kC1> { using type = C1; };
+template<> struct enum_map<DType::kC2> { using type = C2; };
 template<DType dtype>
 struct enum_map<dtype,
 	std::enable_if_t<dtype == DType::kInt32 || dtype == DType::kInt>> {
@@ -136,7 +146,7 @@ private:
 			if (found_index < ull_max) return nullptr;
 			if constexpr (
 				std::is_same<enum_t<dtype>, T>::value ||
-				std::is_base_of<enum_t<dtype>, T>::value) {
+				std::is_base_of<T, enum_t<dtype>>::value) {
 				auto & comp_map = std::get<dtype_index<dtype>>(maps_);
 				auto iter = comp_map.find(key);
 				if (iter != comp_map.end())	{
@@ -161,6 +171,7 @@ private:
 		std::tuple<fixed_vector_t<dtypes>...> vectors_;
 		std::tuple<map_t<dtypes>...> maps_;
 	};
+
 public:
 	using InputMap = Input;
 	using InternalMap = Internal;

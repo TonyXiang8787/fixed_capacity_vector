@@ -64,6 +64,14 @@ void test_struct() {
 		{4, -5},
 		{5, -21}
 	};
+	input_map.get_vec<DType::kC1>() = {
+		{6, { {200}, -5.0} },
+		{7, { {300}, -10.0}}
+	};
+	input_map.get_vec<DType::kC2>() = {
+		{8, { {400}, 1000} },
+		{9, { {500}, 2000}}
+	};
 	InternalMap internal_map{ input_map };
 	internal_map.build_item(input_map);
 
@@ -73,7 +81,12 @@ void test_struct() {
 	std::cout << *(internal_map.get_item<DType::kInt>(2)) << '\n';
 	std::cout << internal_map.get_item<double>(5) << '\n';
 	std::cout << internal_map.get_item<DType::kInt>(5) << '\n';
-
+	std::cout << internal_map.get_item<C>(6)->x << '\n';
+	std::cout << internal_map.get_item<C>(7)->x << '\n';
+	std::cout << internal_map.get_item<C>(8)->x << '\n';
+	std::cout << internal_map.get_item<C>(9)->x << '\n';
+	std::cout << internal_map.get_item<C2>(8)->y << '\n';
+	std::cout << internal_map.get_item<C2>(9)->y << '\n';
 }
 
 int main()
