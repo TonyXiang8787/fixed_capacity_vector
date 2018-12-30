@@ -11,6 +11,7 @@
 #include <limits>
 
 using EnumType = int32_t;
+using IDType = int32_t;
 
 enum class DType : EnumType {
 	kD = 0,
@@ -47,7 +48,14 @@ struct enum_map<dtype,
 	using type = int32_t;
 };
 template<DType dtype>
-using enum_map_t = typename enum_map<dtype>::type;
+using enum_t = typename enum_map<dtype>::type;
+template<DType dtype>
+using fixed_vector_t = FixedCapacityVector<enum_t<dtype>>;
+template<DType dtype>
+using input_vector_t = std::vector<InputPair<enum_t<dtype>>>;
+template<DType dtype>
+using map_t = std::unordered_map<IDType, enum_t<dtype>*>;
+
 // get index of enum
 template <DType d, DType... ds> struct get_index;
 template <DType d, DType... ds>
@@ -55,7 +63,6 @@ struct get_index<d, d, ds...> : std::integral_constant<size_t, 0> {};
 template <DType d, DType d2, DType... ds>
 struct get_index<d, d2, ds...> :
 	std::integral_constant<std::size_t, 1 + get_index<d, ds...>::value> {};
-
 template<DType...dtypes>
 struct TypeBase
 {
@@ -67,15 +74,15 @@ private:
 	class Input {
 	public:
 		template<DType dtype>
-		std::vector<InputPair<enum_map_t<dtype>>> & get_vec() {
+		input_vector_t<dtype> & get_vec() {
 			return std::get<dtype_index<dtype>>(vectors_);
 		}
 		template<DType dtype>
-		std::vector<InputPair<enum_map_t<dtype>>> const& get_vec() const {
+		input_vector_t<dtype> const& get_vec() const {
 			return std::get<dtype_index<dtype>>(vectors_);
 		}
 	private:
-		std::tuple<std::vector<InputPair<enum_map_t<dtypes>>>...> vectors_;
+		std::tuple<input_vector_t<dtypes>...> vectors_;
 	};
 
 	class Internal {
@@ -90,10 +97,10 @@ private:
 		}
 		template<DType dtype>
 		void build_item(Input const& input) {
-			using T = enum_map_t<dtype>;
-			using TVector = FixedCapacityVector<T>;
-			using TMap = std::unordered_map<int32_t, T*>;
-			std::vector<InputPair<T>> const& input_vec =
+			using T = enum_t<dtype>;
+			using TVector = fixed_vector_t<dtype>;
+			using TMap = map_t<dtype>;
+			input_vector_t<dtype> const& input_vec =
 				input.template get_vec<dtype>();
 			TVector & internal_vec = get_vec<dtype>();
 			TMap & internal_map = get_map<dtype>();
@@ -108,7 +115,7 @@ private:
 		// get item method
 		static constexpr size_t ull_max = std::numeric_limits<size_t>::max();
 		template<class T>
-		T* get_item(int32_t key) {
+		T* get_item(IDType key) {
 			size_t index{ 0 }, found_index{ ull_max };
 			std::array<T*, sizeof...(dtypes)> found_arr = { 
 				get_item<T, dtypes>(key, index, found_index)... };
@@ -116,20 +123,20 @@ private:
 			else return nullptr;
 		}
 		template<DType dtype>
-		enum_map_t<dtype>* get_item(int32_t key) {
-			using T = enum_map_t<dtype>;
+		enum_t<dtype>* get_item(IDType key) {
+			using T = enum_t<dtype>;
 			size_t index{ 0 }, found_index{ ull_max };
 			T* ptr = get_item<T, dtype>(key, index, found_index);
 			if (ptr) return ptr;
 			else return nullptr;
 		}
 		template<class T, DType dtype>
-		T* get_item(int32_t key, size_t& index, size_t& found_index) { 
+		T* get_item(IDType key, size_t& index, size_t& found_index) {
 			index++;
 			if (found_index < ull_max) return nullptr;
 			if constexpr (
-				std::is_same<enum_map_t<dtype>, T>::value ||
-				std::is_base_of<enum_map_t<dtype>, T>::value) {
+				std::is_same<enum_t<dtype>, T>::value ||
+				std::is_base_of<enum_t<dtype>, T>::value) {
 				auto & comp_map = std::get<dtype_index<dtype>>(maps_);
 				auto iter = comp_map.find(key);
 				if (iter != comp_map.end())	{
@@ -143,16 +150,16 @@ private:
 
 		// getter for internal map and vector
 		template<DType dtype>
-		FixedCapacityVector<enum_map_t<dtype>> & get_vec() {
+		fixed_vector_t<dtype> & get_vec() {
 			return std::get<dtype_index<dtype>>(vectors_);
 		}
 		template<DType dtype>
-		std::unordered_map<int32_t, enum_map_t<dtype>*> & get_map() {
+		map_t<dtype> & get_map() {
 			return std::get<dtype_index<dtype>>(maps_);
 		}
 	private:
-		std::tuple<FixedCapacityVector<enum_map_t<dtypes>>...> vectors_;
-		std::tuple<std::unordered_map<int32_t, enum_map_t<dtypes>*>...> maps_;
+		std::tuple<fixed_vector_t<dtypes>...> vectors_;
+		std::tuple<map_t<dtypes>...> maps_;
 	};
 public:
 	using InputMap = Input;
