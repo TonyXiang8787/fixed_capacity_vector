@@ -7,4 +7,5 @@ int main()
 	InputMap input_map;
 	Root::resize_input(input_map, 5);
 	InternalMap internal_map{ input_map };
+	int * found = internal_map.get_item<int>(5);
 }

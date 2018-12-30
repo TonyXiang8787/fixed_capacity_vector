@@ -78,9 +78,36 @@ private:
 		{ }
 
 		template<class T>
-		T& get_item() {
-
+		T* get_item(int32_t key) {
+			bool is_found = false;
+			std::array<T*, sizeof...(dtypes)> found_arr = { 
+				get_item_single<dtypes, T>(key, is_found)... };
+			for (T* ptr : found_arr)
+			{
+				if (ptr)
+					return ptr;
+			}
+			return nullptr;
 		}
+
+		template<DType dtype, class T>
+		T* get_item_single(int32_t key, bool & is_found) { 
+			if (is_found) return nullptr;
+			if constexpr (
+				std::is_same<enum_map_t<dtype>, T>::value ||
+				std::is_base_of<enum_map_t<dtype>, T>::value)
+			{
+				auto & comp_map = std::get<dtype_index<dtype>>(maps_);
+				auto iter = comp_map.find(key);
+				if (iter != comp_map.end())
+				{
+					is_found = true;
+					return iter->second;
+				}
+			}
+			return nullptr;
+		}
+
 	private:
 		std::tuple<FixedCapacityVector<enum_map_t<dtypes>>...> vectors_;
 		std::tuple<std::unordered_map<int32_t, enum_map_t<dtypes>*>...> maps_;
