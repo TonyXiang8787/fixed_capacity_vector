@@ -192,10 +192,6 @@ private:
 public:
 	using InputMap = Input;
 	using InternalMap = Internal;
-
-	static void resize_input(InputMap & input_map, size_t size) {
-		(input_map.template get_vec<dtypes>().resize(size), ...);
-	}
 };
 
 template<class> struct TypeTrait;
