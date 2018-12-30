@@ -73,7 +73,6 @@ void test_struct() {
 		{9, { {500}, 2000}}
 	};
 	InternalMap internal_map{ input_map };
-	internal_map.build_item(input_map);
 
 	std::cout << "***********Test compile time struct*********\n";
 	std::cout << *(internal_map.get_item<int>(5)) << '\n';

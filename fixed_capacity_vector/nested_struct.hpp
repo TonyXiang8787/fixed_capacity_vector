@@ -104,12 +104,11 @@ private:
 	public:
 		Internal(Input const& input) :
 			vectors_{ input.template get_vec<dtypes>().size()... }
-		{ }
-
-		// build item method
-		void build_item(Input const& input) {
+		{
 			(build_item<dtypes>(input), ...);
 		}
+
+
 		// get item method
 		static constexpr size_t ull_max = std::numeric_limits<size_t>::max();
 		template<class T>
