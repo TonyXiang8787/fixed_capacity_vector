@@ -128,10 +128,27 @@ private:
 		template<class T>
 		class Iterator {
 		public:
+			/*T& operator* () {
+				return std::get<seq_vec_>(vectors_)[seq_item_];
+			}*/
+			bool operator==(const Iterator& rhs) const {
+				return (seq_vec_ == rhs.seq_vec_) &&
+					(seq_item_ == rhs.seq_item_);
+			}
+			bool operator!=(const Iterator& rhs) const {
+				return !(*this == rhs);
+			}
+
+		public:
 			static constexpr std::array<bool, sizeof...(dtypes)>
 				allow_vector_{
 				(std::is_same<enum_t<dtypes>, T>::value ||
 				std::is_base_of<T, enum_t<dtypes>>::value)... };
+			// reference to tuples of vectors
+			// std::tuple<fixed_vector_t<dtypes>...>& vectors_;
+			// sequence of vector and item
+			size_t seq_vec_;
+			size_t seq_item_;
 		};
 
 		// getter for internal map and vector
