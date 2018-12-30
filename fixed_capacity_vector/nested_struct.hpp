@@ -105,23 +105,6 @@ private:
 		void build_item(Input const& input) {
 			(build_item<dtypes>(input), ...);
 		}
-		template<DType dtype>
-		void build_item(Input const& input) {
-			using T = enum_t<dtype>;
-			using TVector = fixed_vector_t<dtype>;
-			using TMap = map_t<dtype>;
-			input_vector_t<dtype> const& input_vec =
-				input.template get_vec<dtype>();
-			TVector & internal_vec = get_vec<dtype>();
-			TMap & internal_map = get_map<dtype>();
-			for (auto & input_pair : input_vec) {
-				internal_map.insert(
-					{ input_pair.key, 
-					&(internal_vec.emplace_back(input_pair.value)) }
-				);
-			}
-		}
-
 		// get item method
 		static constexpr size_t ull_max = std::numeric_limits<size_t>::max();
 		template<class T>
@@ -140,23 +123,16 @@ private:
 			if (ptr) return ptr;
 			else return nullptr;
 		}
-		template<class T, DType dtype>
-		T* get_item(IDType key, size_t& index, size_t& found_index) {
-			index++;
-			if (found_index < ull_max) return nullptr;
-			if constexpr (
-				std::is_same<enum_t<dtype>, T>::value ||
-				std::is_base_of<T, enum_t<dtype>>::value) {
-				auto & comp_map = std::get<dtype_index<dtype>>(maps_);
-				auto iter = comp_map.find(key);
-				if (iter != comp_map.end())	{
-					found_index = index - 1;
-					return iter->second; 
-				}
-			}
-			return nullptr;
-		}
 
+		// define iterator for certain (base) type
+		template<class T>
+		class Iterator {
+		public:
+			static constexpr std::array<bool, sizeof...(dtypes)>
+				allow_vector_{
+				(std::is_same<enum_t<dtypes>, T>::value ||
+				std::is_base_of<T, enum_t<dtypes>>::value)... };
+		};
 
 		// getter for internal map and vector
 		template<DType dtype>
@@ -170,6 +146,41 @@ private:
 	private:
 		std::tuple<fixed_vector_t<dtypes>...> vectors_;
 		std::tuple<map_t<dtypes>...> maps_;
+
+		// build item and get item
+		template<DType dtype>
+		void build_item(Input const& input) {
+			using T = enum_t<dtype>;
+			using TVector = fixed_vector_t<dtype>;
+			using TMap = map_t<dtype>;
+			input_vector_t<dtype> const& input_vec =
+				input.template get_vec<dtype>();
+			TVector & internal_vec = get_vec<dtype>();
+			TMap & internal_map = get_map<dtype>();
+			for (auto & input_pair : input_vec) {
+				internal_map.insert(
+					{ input_pair.key,
+					&(internal_vec.emplace_back(input_pair.value)) }
+				);
+			}
+		}
+		template<class T, DType dtype>
+		T* get_item(IDType key, size_t& index, size_t& found_index) {
+			index++;
+			if (found_index < ull_max) return nullptr;
+			if constexpr (
+				std::is_same<enum_t<dtype>, T>::value ||
+				std::is_base_of<T, enum_t<dtype>>::value) {
+				auto & comp_map = std::get<dtype_index<dtype>>(maps_);
+				auto iter = comp_map.find(key);
+				if (iter != comp_map.end()) {
+					found_index = index - 1;
+					return iter->second;
+				}
+			}
+			return nullptr;
+		}
+
 	};
 
 public:
