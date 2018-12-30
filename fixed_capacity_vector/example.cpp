@@ -87,12 +87,6 @@ void test_struct() {
 	std::cout << internal_map.get_item<C>(9)->x << '\n';
 	std::cout << internal_map.get_item<C2>(8)->y << '\n';
 	std::cout << internal_map.get_item<C2>(9)->y << '\n';
-
-	using IT = InternalMap::Iterator<C>;
-	auto x = IT{ 1,2 };
-	auto y = IT{ 2,3 };
-	std::cout << (x == y) << '\n';
-	std::cout << (x != y) << '\n';
 }
 
 int main()
