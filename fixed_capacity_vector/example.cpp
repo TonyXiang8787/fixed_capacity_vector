@@ -66,10 +66,13 @@ void test_struct() {
 	};
 	InternalMap internal_map{ input_map };
 	internal_map.build_item(input_map);
-	int * found = internal_map.get_item<int>(5);
 
 	std::cout << "***********Test compile time struct*********\n";
-	std::cout << *(internal_map.get_item<DType::kInt32>(5)) << '\n';
+	std::cout << *(internal_map.get_item<int>(5)) << '\n';
+	std::cout << *(internal_map.get_item<double>(0)) << '\n';
+	std::cout << *(internal_map.get_item<DType::kInt>(2)) << '\n';
+	std::cout << internal_map.get_item<double>(5) << '\n';
+	std::cout << internal_map.get_item<DType::kInt>(5) << '\n';
 
 }
 
