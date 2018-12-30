@@ -52,13 +52,24 @@ void test_vector()
 
 void test_struct() {
 	InputMap input_map;
-	Root::resize_input(input_map, 5);
+	input_map.get_vec<DType::kD>() = {
+		{0, 100.0},
+		{1, 2.0}
+	};
+	input_map.get_vec<DType::kInt>() = {
+		{2, 30},
+		{3, 50}
+	};
+	input_map.get_vec<DType::kInt32>() = {
+		{4, -5},
+		{5, -21}
+	};
 	InternalMap internal_map{ input_map };
+	internal_map.build_item(input_map);
 	int * found = internal_map.get_item<int>(5);
 
 	std::cout << "***********Test compile time struct*********\n";
-	std::cout << found << '\n';
-	std::cout << internal_map.get_item<DType::kInt32>(5) << '\n';
+	std::cout << *(internal_map.get_item<DType::kInt32>(5)) << '\n';
 
 }
 

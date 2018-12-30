@@ -84,6 +84,28 @@ private:
 			vectors_{ input.template get_vec<dtypes>().size()... }
 		{ }
 
+		// build item method
+		void build_item(Input const& input) {
+			(build_item<dtypes>(input), ...);
+		}
+		template<DType dtype>
+		void build_item(Input const& input) {
+			using T = enum_map_t<dtype>;
+			using TVector = FixedCapacityVector<T>;
+			using TMap = std::unordered_map<int32_t, T*>;
+			std::vector<InputPair<T>> const& input_vec =
+				input.template get_vec<dtype>();
+			TVector & internal_vec = get_vec<dtype>();
+			TMap & internal_map = get_map<dtype>();
+			for (auto & input_pair : input_vec) {
+				internal_map.insert(
+					{ input_pair.key, 
+					&(internal_vec.emplace_back(input_pair.value)) }
+				);
+			}
+		}
+
+		// get item method
 		static constexpr size_t ull_max = std::numeric_limits<size_t>::max();
 		template<class T>
 		T* get_item(int32_t key) {
@@ -118,6 +140,16 @@ private:
 			return nullptr;
 		}
 
+
+		// getter for internal map and vector
+		template<DType dtype>
+		FixedCapacityVector<enum_map_t<dtype>> & get_vec() {
+			return std::get<dtype_index<dtype>>(vectors_);
+		}
+		template<DType dtype>
+		std::unordered_map<int32_t, enum_map_t<dtype>*> & get_map() {
+			return std::get<dtype_index<dtype>>(maps_);
+		}
 	private:
 		std::tuple<FixedCapacityVector<enum_map_t<dtypes>>...> vectors_;
 		std::tuple<std::unordered_map<int32_t, enum_map_t<dtypes>*>...> maps_;
