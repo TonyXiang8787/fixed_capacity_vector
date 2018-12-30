@@ -8,7 +8,7 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
-#include <climits>
+#include <limits>
 
 using EnumType = int32_t;
 
@@ -26,6 +26,12 @@ constexpr std::array<DType, 5> data_type_arr {
 	DType::kInt8,
 	DType::kInt,
 	DType::kInt16
+};
+
+template<class T>
+struct InputPair {
+	int32_t key;
+	T value;
 };
 
 namespace internal_trait {
@@ -61,15 +67,15 @@ private:
 	class Input {
 	public:
 		template<DType dtype>
-		std::vector<enum_map_t<dtype>> & get_vec() {
+		std::vector<InputPair<enum_map_t<dtype>>> & get_vec() {
 			return std::get<dtype_index<dtype>>(vectors_);
 		}
 		template<DType dtype>
-		std::vector<enum_map_t<dtype>> const& get_vec() const {
+		std::vector<InputPair<enum_map_t<dtype>>> const& get_vec() const {
 			return std::get<dtype_index<dtype>>(vectors_);
 		}
 	private:
-		std::tuple<std::vector<enum_map_t<dtypes>>...> vectors_;
+		std::tuple<std::vector<InputPair<enum_map_t<dtypes>>>...> vectors_;
 	};
 
 	class Internal {
@@ -78,18 +84,19 @@ private:
 			vectors_{ input.template get_vec<dtypes>().size()... }
 		{ }
 
+		static constexpr size_t ull_max = std::numeric_limits<size_t>::max();
 		template<class T>
 		T* get_item(int32_t key) {
-			size_t index{ 0 }, found_index{ ULLONG_MAX };
+			size_t index{ 0 }, found_index{ ull_max };
 			std::array<T*, sizeof...(dtypes)> found_arr = { 
 				get_item<T, dtypes>(key, index, found_index)... };
-			if (found_index < ULLONG_MAX) return found_arr[found_index];
+			if (found_index < ull_max) return found_arr[found_index];
 			else return nullptr;
 		}
 		template<DType dtype>
 		enum_map_t<dtype>* get_item(int32_t key) {
 			using T = enum_map_t<dtype>;
-			size_t index{ 0 }, found_index{ ULLONG_MAX };
+			size_t index{ 0 }, found_index{ ull_max };
 			T* ptr = get_item<T, dtype>(key, index, found_index);
 			if (ptr) return ptr;
 			else return nullptr;
@@ -97,7 +104,7 @@ private:
 		template<class T, DType dtype>
 		T* get_item(int32_t key, size_t& index, size_t& found_index) { 
 			index++;
-			if (found_index < ULLONG_MAX) return nullptr;
+			if (found_index < ull_max) return nullptr;
 			if constexpr (
 				std::is_same<enum_map_t<dtype>, T>::value ||
 				std::is_base_of<enum_map_t<dtype>, T>::value) {
