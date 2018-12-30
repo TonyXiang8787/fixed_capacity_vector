@@ -8,6 +8,7 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
+#include <climits>
 
 using EnumType = int32_t;
 
@@ -79,20 +80,19 @@ private:
 
 		template<class T>
 		T* get_item(int32_t key) {
-			bool is_found = false;
+			size_t index{ 0 }, found_index{ ULLONG_MAX };
 			std::array<T*, sizeof...(dtypes)> found_arr = { 
-				get_item_single<dtypes, T>(key, is_found)... };
-			for (T* ptr : found_arr)
-			{
-				if (ptr)
-					return ptr;
-			}
-			return nullptr;
+				get_item_single<dtypes, T>(key, index, found_index)... };
+			if (found_index < ULLONG_MAX)
+				return found_arr[found_index];
+			else
+				return nullptr;
 		}
 
 		template<DType dtype, class T>
-		T* get_item_single(int32_t key, bool & is_found) { 
-			if (is_found) return nullptr;
+		T* get_item_single(int32_t key, size_t& index, size_t& found_index) { 
+			index++;
+			if (found_index < ULLONG_MAX) return nullptr;
 			if constexpr (
 				std::is_same<enum_map_t<dtype>, T>::value ||
 				std::is_base_of<enum_map_t<dtype>, T>::value)
@@ -101,7 +101,7 @@ private:
 				auto iter = comp_map.find(key);
 				if (iter != comp_map.end())
 				{
-					is_found = true;
+					found_index = index - 1;
 					return iter->second;
 				}
 			}

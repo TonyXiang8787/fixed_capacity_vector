@@ -18,18 +18,12 @@
     <ClInclude Include="fixed_capacity_vector.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test_func.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="nested_struct.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="example.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="test_vector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
