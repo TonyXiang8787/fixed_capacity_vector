@@ -191,6 +191,7 @@ public:
 	private:
 		using PtrPair = std::pair<void*, void*>;
 		using PtrDeref = T * (Iterator::*)() const;
+		using PtrIncr = void (Iterator::*)();
 		static constexpr std::array<bool, n_types> enable_vec_{
 			is_match<T, dtypes>...};
 		template<DType dtype>
@@ -200,6 +201,10 @@ public:
 		}
 		static constexpr std::array<PtrDeref, n_types> deref_func_{
 			&deref<dtypes>...};
+		template<DType dtype>
+		void incr() { ptr_ = ((enum_t<dtype>*)ptr_) + 1; }
+		static constexpr std::array<PtrIncr, n_types> incr_func_{
+			&incr<dtypes>... };
 	public:
 		using iterator_category = std::forward_iterator_tag;
 		using value_type = T;
@@ -223,8 +228,25 @@ public:
 			}
 		}
 
-
-
+		Iterator& operator++() {
+			incr_func_[seq_]();
+			if (ptr_ == ptr_pairs_[seq_].second)
+			{
+				ptr_ = nullptr;
+				for (; seq_ < n_types; seq_++) {
+					if (ptr_pairs_[seq_].first) {
+						ptr_ = ptr_pairs_[seq_].first;
+						break;
+					}
+				}
+			}
+			return *this;
+		}
+		Iterator operator++(int) {
+			Iterator iter(*this);
+			++(*this);
+			return iter;
+		}
 		reference operator* () const { 
 			return *((this->*deref_func_[seq_])()); }
 		pointer operator->() const { 
