@@ -97,6 +97,8 @@ private:
 template<DType...dtypes>
 class Internal {
 public:
+	static constexpr size_t n_types = sizeof...(dtypes);
+
 	Internal(Input<dtypes...> const& input) :
 		vectors_{ input.template get_vec<dtypes>().size()... }
 	{
@@ -109,7 +111,7 @@ public:
 	template<class T>
 	T* get_item(IDType key) {
 		size_t index{ 0 }, found_index{ ull_max };
-		std::array<T*, sizeof...(dtypes)> found_arr = {
+		std::array<T*, n_types> found_arr = {
 			get_item<T, dtypes>(key, index, found_index)... };
 		if (found_index < ull_max) return found_arr[found_index];
 		else return nullptr;
@@ -189,14 +191,14 @@ public:
 	private:
 		using PtrPair = std::pair<void*, void*>;
 		using PtrDeref = T * (Iterator::*)();
-		static constexpr std::array<bool, sizeof...(dtypes)> enable_vec_{
+		static constexpr std::array<bool, n_types> enable_vec_{
 			is_match<T, dtypes>...};
 		template<DType dtype>
 		T* deref() {
 			if constexpr (is_match<T, dtype>) return (enum_t<dtype>*)ptr_;
 			else return nullptr;
 		}
-		static constexpr std::array<PtrDeref, sizeof...(dtypes)> deref_func_{
+		static constexpr std::array<PtrDeref, n_types> deref_func_{
 			&deref<dtypes>...};
 	public:
 		using iterator_category = std::forward_iterator_tag;
@@ -204,17 +206,40 @@ public:
 		using difference_type = std::ptrdiff_t;
 		using pointer = T*;
 		using reference = T&;
+		Iterator() : ptr_pairs_{} {}
+		Iterator(Internal& internal, bool is_begin):
+			ptr_pairs_{ get_range<dtypes>(internal)... }
+		{
+			if (is_begin) {
+				for (; seq_ < n_types; seq_++) {
+					if (ptr_pairs_[seq_].first) {
+						ptr_ = ptr_pairs_[seq_].first;
+						return;
+					}
+				}
+			}
+			else {
+				seq_ = n_types;
+			}
+		}
 
 		reference operator* () const { 
 			return *((this->*deref_func_[seq_])()); }
 		pointer operator->() const { 
 			return (this->*deref_func_[seq_])(); }
 	private:
-		std::array<PtrPair, sizeof...(dtypes)> const ptr_pairs_{};
+		std::array<PtrPair, n_types> const ptr_pairs_;
 		size_t seq_{ 0 };  // sequence number
 		void* ptr_{ nullptr };  // void pointer
 
-		
+		template<DType dtype>
+		PtrPair get_range(Internal& internal) {
+			if constexpr (is_match<T, dtype>)
+				if (internal.get_vec<dtype>().size() > 0)
+					return { internal.get_vec<dtype>().begin(),
+					internal.get_vec<dtype>().end() };
+			return { nullptr, nullptr };
+		}
 	};
 };
 
