@@ -134,7 +134,7 @@ public:
 private:
 	std::tuple<fixed_vector_t<dtypes>...> vectors_;
 	std::tuple<map_t<dtypes>...> maps_;
-	// build, get, for_each, per category
+	// build, get, per category
 	template<DType dtype>
 	void build_item(Input<dtypes...> const& input) {
 		using T = enum_t<dtype>;
@@ -181,11 +181,11 @@ private:
 			else return nullptr;
 		}
 		static constexpr std::array<PtrDeref, n_types> deref_func_{
-			&deref<dtypes>...};
+			&Iterator::deref<dtypes>...};
 		template<DType dtype>
 		void incr() { ptr_ = ((enum_t<dtype>*)ptr_) + 1; }
 		static constexpr std::array<PtrIncr, n_types> incr_func_{
-			&incr<dtypes>... };
+			&Iterator::incr<dtypes>... };
 	public:
 		using iterator_category = std::forward_iterator_tag;
 		using value_type = T;
