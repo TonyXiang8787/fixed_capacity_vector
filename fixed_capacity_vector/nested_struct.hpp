@@ -190,11 +190,11 @@ public:
 	class Iterator {
 	private:
 		using PtrPair = std::pair<void*, void*>;
-		using PtrDeref = T * (Iterator::*)();
+		using PtrDeref = T * (Iterator::*)() const;
 		static constexpr std::array<bool, n_types> enable_vec_{
 			is_match<T, dtypes>...};
 		template<DType dtype>
-		T* deref() {
+		T* deref() const {
 			if constexpr (is_match<T, dtype>) return (enum_t<dtype>*)ptr_;
 			else return nullptr;
 		}
@@ -223,10 +223,16 @@ public:
 			}
 		}
 
+
+
 		reference operator* () const { 
 			return *((this->*deref_func_[seq_])()); }
 		pointer operator->() const { 
 			return (this->*deref_func_[seq_])(); }
+		bool operator==(Iterator const& rhs) const { 
+			return (ptr_ == rhs.ptr_) && (seq_ == rhs.seq_); }
+		bool operator!=(Iterator const& rhs) const {
+			return !(*this == rhs);	}
 	private:
 		std::array<PtrPair, n_types> const ptr_pairs_;
 		size_t seq_{ 0 };  // sequence number

@@ -90,7 +90,10 @@ void test_struct() {
 	internal_map.for_each<C>([](C& c) { std::cout << c.x << '\n'; });
 	internal_map.for_each<int>([](int& x) { std::cout << x << '\n'; });
 
-	InternalMap::Iterator<C> x{ internal_map, true };
+	InternalMap::Iterator<C> x1{ internal_map, true };
+	InternalMap::Iterator<C> x2{ internal_map, true };
+	auto xc = x1 == x2;
+	auto xx = x1->x;
 }
 
 int main()
