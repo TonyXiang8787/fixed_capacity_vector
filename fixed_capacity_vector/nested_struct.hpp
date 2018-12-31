@@ -204,6 +204,11 @@ public:
 		using difference_type = std::ptrdiff_t;
 		using pointer = T*;
 		using reference = T&;
+
+		reference operator* () const { 
+			return *((this->*deref_func_[seq_])()); }
+		pointer operator->() const { 
+			return (this->*deref_func_[seq_])(); }
 	private:
 		std::array<PtrPair, sizeof...(dtypes)> const ptr_pairs_{};
 		size_t seq_{ 0 };  // sequence number
