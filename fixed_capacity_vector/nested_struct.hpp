@@ -104,8 +104,6 @@ public:
 	{
 		(build_item<dtypes>(input), ...);
 	}
-
-
 	// get item method
 	static constexpr size_t ull_max = std::numeric_limits<size_t>::max();
 	template<class T>
@@ -124,8 +122,6 @@ public:
 		if (ptr) return ptr;
 		else return nullptr;
 	}
-
-
 	// getter for internal map and vector
 	template<DType dtype>
 	fixed_vector_t<dtype> & get_vec() {
@@ -135,15 +131,9 @@ public:
 	map_t<dtype> & get_map() {
 		return std::get<get_index<dtype, dtypes...>::value>(maps_);
 	}
-
-	template<class T, class Func>
-	void for_each(Func func) {
-		(for_each<T, dtypes, Func>(func), ...);
-	}
 private:
 	std::tuple<fixed_vector_t<dtypes>...> vectors_;
 	std::tuple<map_t<dtypes>...> maps_;
-
 	// build, get, for_each, per category
 	template<DType dtype>
 	void build_item(Input<dtypes...> const& input) {
@@ -175,16 +165,7 @@ private:
 		}
 		return nullptr;
 	}
-	template<class T, DType dtype, class Func>
-	void for_each(Func func) {
-		if constexpr (is_match<T, dtype>) {
-			fixed_vector_t<dtype>& vec = get_vec<dtype>();
-			for (T& item : vec)
-				func(item);
-		}
-	}
-
-public:
+private:
 	// iterator
 	template<class T>
 	class Iterator {
@@ -227,7 +208,6 @@ public:
 				seq_ = n_types;
 			}
 		}
-
 		Iterator& operator++() {
 			(this->*incr_func_[seq_])();
 			if (ptr_ == ptr_pairs_[seq_].second)
@@ -270,6 +250,25 @@ public:
 			return { nullptr, nullptr };
 		}
 	};
+	// proxy object
+	template<class T>
+	class Proxy {
+	public:
+		Proxy(Internal& internal):
+			begin_{ internal, true },
+			end_{ internal, false }
+		{}
+		Iterator<T> begin() { return begin_; }
+		Iterator<T> end() { return end_; }
+	private:
+		Iterator<T> const begin_;
+		Iterator<T> const end_;
+	};
+public:
+	template<class T>
+	Proxy<T> iter() {
+		return Proxy<T>{ *this };
+	}
 };
 
 

@@ -86,13 +86,10 @@ void test_struct() {
 	std::cout << internal_map.get_item<C>(9)->x << '\n';
 	std::cout << internal_map.get_item<C2>(8)->y << '\n';
 	std::cout << internal_map.get_item<C2>(9)->y << '\n';
-	internal_map.for_each<int>([](int& x) { std::cout << x << '\n'; });
-
-	InternalMap::Iterator<C> x1{ internal_map, true };
-	InternalMap::Iterator<C> x2{ internal_map, false };
-	for (auto iter = x1; iter != x2; iter++) {
-		std::cout << iter->x << '\n';
-	}
+	for (C& c : internal_map.iter<C>())
+		std::cout << c.x << '\n';
+	for (int& x : internal_map.iter<int>())
+		std::cout << x << '\n';
 }
 
 int main()
