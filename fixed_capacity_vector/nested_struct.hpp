@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <limits>
+#include <iterator>
 
 using EnumType = int32_t;
 using IDType = int32_t;
@@ -180,6 +181,30 @@ private:
 				func(item);
 		}
 	}
+
+public:
+	// iterator
+	template<class T>
+	class Iterator {
+	private:
+		using PtrPair = std::pair<void*, void*>;
+		using PtrDeref = T * (Iterator::*)();
+		static constexpr std::array<bool, sizeof...(dtypes)> enable_vec_{
+			is_match<T, dtypes>...};
+		static constexpr std::array<PtrDeref, sizeof...(dtypes)> deref_func_{};
+	public:
+		using iterator_category = std::forward_iterator_tag;
+		using value_type = T;
+		using difference_type = std::ptrdiff_t;
+		using pointer = T*;
+		using reference = T&;
+	private:
+		std::array<PtrPair, sizeof...(dtypes)> const ptr_pairs_{};
+		size_t seq_{ 0 };  // sequence number
+		void* ptr_{ nullptr };  // void pointer
+
+
+	};
 };
 
 
