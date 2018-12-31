@@ -229,10 +229,11 @@ public:
 		}
 
 		Iterator& operator++() {
-			incr_func_[seq_]();
+			(this->*incr_func_[seq_])();
 			if (ptr_ == ptr_pairs_[seq_].second)
 			{
 				ptr_ = nullptr;
+				seq_++;
 				for (; seq_ < n_types; seq_++) {
 					if (ptr_pairs_[seq_].first) {
 						ptr_ = ptr_pairs_[seq_].first;
