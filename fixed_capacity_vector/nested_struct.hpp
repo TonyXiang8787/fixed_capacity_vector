@@ -77,6 +77,112 @@ struct get_index<d, d, ds...> : std::integral_constant<size_t, 0> {};
 template <DType d, DType d2, DType... ds>
 struct get_index<d, d2, ds...> :
 	std::integral_constant<std::size_t, 1 + get_index<d, ds...>::value> {};
+
+template<DType...dtypes>
+class Input {
+public:
+	template<DType dtype>
+	input_vector_t<dtype> & get_vec() {
+		return std::get<get_index<dtype, dtypes...>::value>(vectors_);
+	}
+	template<DType dtype>
+	input_vector_t<dtype> const& get_vec() const {
+		return std::get<get_index<dtype, dtypes...>::value>(vectors_);
+	}
+private:
+	std::tuple<input_vector_t<dtypes>...> vectors_;
+};
+
+template<DType...dtypes>
+class Internal {
+public:
+	Internal(Input<dtypes...> const& input) :
+		vectors_{ input.template get_vec<dtypes>().size()... }
+	{
+		(build_item<dtypes>(input), ...);
+	}
+
+
+	// get item method
+	static constexpr size_t ull_max = std::numeric_limits<size_t>::max();
+	template<class T>
+	T* get_item(IDType key) {
+		size_t index{ 0 }, found_index{ ull_max };
+		std::array<T*, sizeof...(dtypes)> found_arr = {
+			get_item<T, dtypes>(key, index, found_index)... };
+		if (found_index < ull_max) return found_arr[found_index];
+		else return nullptr;
+	}
+	template<DType dtype>
+	enum_t<dtype>* get_item(IDType key) {
+		using T = enum_t<dtype>;
+		size_t index{ 0 }, found_index{ ull_max };
+		T* ptr = get_item<T, dtype>(key, index, found_index);
+		if (ptr) return ptr;
+		else return nullptr;
+	}
+
+
+	// getter for internal map and vector
+	template<DType dtype>
+	fixed_vector_t<dtype> & get_vec() {
+		return std::get<get_index<dtype, dtypes...>::value>(vectors_);
+	}
+	template<DType dtype>
+	map_t<dtype> & get_map() {
+		return std::get<get_index<dtype, dtypes...>::value>(maps_);
+	}
+
+	template<class T, class Func>
+	void for_each(Func func) {
+		(for_each<T, dtypes, Func>(func), ...);
+	}
+private:
+	std::tuple<fixed_vector_t<dtypes>...> vectors_;
+	std::tuple<map_t<dtypes>...> maps_;
+
+	// build, get, for_each, per category
+	template<DType dtype>
+	void build_item(Input<dtypes...> const& input) {
+		using T = enum_t<dtype>;
+		using TVector = fixed_vector_t<dtype>;
+		using TMap = map_t<dtype>;
+		input_vector_t<dtype> const& input_vec =
+			input.template get_vec<dtype>();
+		TVector& internal_vec = get_vec<dtype>();
+		TMap& internal_map = get_map<dtype>();
+		for (auto & input_pair : input_vec) {
+			internal_map.insert(
+				{ input_pair.key,
+				&(internal_vec.emplace_back(input_pair.value)) }
+			);
+		}
+	}
+	template<class T, DType dtype>
+	T* get_item(IDType key, size_t& index, size_t& found_index) {
+		index++;
+		if (found_index < ull_max) return nullptr;
+		if constexpr (is_match<T, dtype>) {
+			auto & comp_map = get_map<dtype>();
+			auto iter = comp_map.find(key);
+			if (iter != comp_map.end()) {
+				found_index = index - 1;
+				return iter->second;
+			}
+		}
+		return nullptr;
+	}
+	template<class T, DType dtype, class Func>
+	void for_each(Func func) {
+		if constexpr (is_match<T, dtype>) {
+			fixed_vector_t<dtype>& vec = get_vec<dtype>();
+			for (T& item : vec)
+				func(item);
+		}
+	}
+};
+
+
 template<DType...dtypes>
 struct TypeBase
 {
@@ -85,112 +191,9 @@ private:
 	static constexpr size_t dtype_index =
 		get_index<d, dtypes...>::value;
 
-
-	class Input {
-	public:
-		template<DType dtype>
-		input_vector_t<dtype> & get_vec() {
-			return std::get<dtype_index<dtype>>(vectors_);
-		}
-		template<DType dtype>
-		input_vector_t<dtype> const& get_vec() const {
-			return std::get<dtype_index<dtype>>(vectors_);
-		}
-	private:
-		std::tuple<input_vector_t<dtypes>...> vectors_;
-	};
-
-	class Internal {
-	public:
-		Internal(Input const& input) :
-			vectors_{ input.template get_vec<dtypes>().size()... }
-		{
-			(build_item<dtypes>(input), ...);
-		}
-
-
-		// get item method
-		static constexpr size_t ull_max = std::numeric_limits<size_t>::max();
-		template<class T>
-		T* get_item(IDType key) {
-			size_t index{ 0 }, found_index{ ull_max };
-			std::array<T*, sizeof...(dtypes)> found_arr = { 
-				get_item<T, dtypes>(key, index, found_index)... };
-			if (found_index < ull_max) return found_arr[found_index];
-			else return nullptr;
-		}
-		template<DType dtype>
-		enum_t<dtype>* get_item(IDType key) {
-			using T = enum_t<dtype>;
-			size_t index{ 0 }, found_index{ ull_max };
-			T* ptr = get_item<T, dtype>(key, index, found_index);
-			if (ptr) return ptr;
-			else return nullptr;
-		}
-		
-
-		// getter for internal map and vector
-		template<DType dtype>
-		fixed_vector_t<dtype> & get_vec() {
-			return std::get<dtype_index<dtype>>(vectors_);
-		}
-		template<DType dtype>
-		map_t<dtype> & get_map() {
-			return std::get<dtype_index<dtype>>(maps_);
-		}
-
-		template<class T, class Func>
-		void for_each(Func func) {
-			(for_each<T, dtypes, Func>(func), ...);
-		}
-	private:
-		std::tuple<fixed_vector_t<dtypes>...> vectors_;
-		std::tuple<map_t<dtypes>...> maps_;
-
-		// build, get, for_each, per category
-		template<DType dtype>
-		void build_item(Input const& input) {
-			using T = enum_t<dtype>;
-			using TVector = fixed_vector_t<dtype>;
-			using TMap = map_t<dtype>;
-			input_vector_t<dtype> const& input_vec =
-				input.template get_vec<dtype>();
-			TVector& internal_vec = get_vec<dtype>();
-			TMap& internal_map = get_map<dtype>();
-			for (auto & input_pair : input_vec) {
-				internal_map.insert(
-					{ input_pair.key,
-					&(internal_vec.emplace_back(input_pair.value)) }
-				);
-			}
-		}
-		template<class T, DType dtype>
-		T* get_item(IDType key, size_t& index, size_t& found_index) {
-			index++;
-			if (found_index < ull_max) return nullptr;
-			if constexpr (is_match<T, dtype>) {
-				auto & comp_map = std::get<dtype_index<dtype>>(maps_);
-				auto iter = comp_map.find(key);
-				if (iter != comp_map.end()) {
-					found_index = index - 1;
-					return iter->second;
-				}
-			}
-			return nullptr;
-		}
-		template<class T, DType dtype, class Func>
-		void for_each(Func func) {
-			if constexpr (is_match<T, dtype>) {
-				fixed_vector_t<dtype>& vec = get_vec<dtype>();
-				for (T& item : vec)
-					func(item);
-			}
-		}
-	};
-
 public:
-	using InputMap = Input;
-	using InternalMap = Internal;
+	using InputMap = Input<dtypes...>;
+	using InternalMap = Internal<dtypes...>;
 };
 
 template<class> struct TypeTrait;
