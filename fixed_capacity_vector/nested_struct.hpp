@@ -191,7 +191,13 @@ public:
 		using PtrDeref = T * (Iterator::*)();
 		static constexpr std::array<bool, sizeof...(dtypes)> enable_vec_{
 			is_match<T, dtypes>...};
-		static constexpr std::array<PtrDeref, sizeof...(dtypes)> deref_func_{};
+		template<DType dtype>
+		T* deref() {
+			if constexpr (is_match<T, dtype>) return (enum_t<dtype>*)ptr_;
+			else return nullptr;
+		}
+		static constexpr std::array<PtrDeref, sizeof...(dtypes)> deref_func_{
+			&deref<dtypes>...};
 	public:
 		using iterator_category = std::forward_iterator_tag;
 		using value_type = T;
@@ -203,7 +209,7 @@ public:
 		size_t seq_{ 0 };  // sequence number
 		void* ptr_{ nullptr };  // void pointer
 
-
+		
 	};
 };
 
