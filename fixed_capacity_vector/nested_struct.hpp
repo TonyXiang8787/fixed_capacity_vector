@@ -70,7 +70,6 @@ template<class T, DType dtype>
 constexpr bool is_match = (
 	std::is_same<enum_t<dtype>, T>::value ||
 	std::is_base_of<T, enum_t<dtype>>::value);
-
 // get index of enum
 template <DType d, DType... ds> struct get_index;
 template <DType d, DType... ds>
@@ -78,6 +77,14 @@ struct get_index<d, d, ds...> : std::integral_constant<size_t, 0> {};
 template <DType d, DType d2, DType... ds>
 struct get_index<d, d2, ds...> :
 	std::integral_constant<std::size_t, 1 + get_index<d, ds...>::value> {};
+// assert of dtypes satisfies
+template<bool...> struct bool_pack;
+template<bool... bs>
+using all_true = std::is_same<
+	bool_pack<bs..., true>, 
+	bool_pack<true, bs...>>;
+template<class T, DType...ds>
+constexpr bool type_check = all_true<is_match<T, ds>...>::value;
 
 template<DType...dtypes>
 class Input {
