@@ -114,6 +114,20 @@ struct matched_dtypes<T, dtype_seq<d0, d1...>, dtype_seq<d2...>> {
 		typename add_match<dtype_seq<d2...>, T, d0>::type
 	>::type;
 };
+// get iterator type
+template<template<class, DType...> class IteratorClass,	class T, class DSeq>
+struct get_iterator_type;
+template<template<class, DType...> class IteratorClass, class T, DType...ds>
+struct get_iterator_type<IteratorClass, T, dtype_seq<ds...>> {
+	using type = IteratorClass<T, ds...>;
+};
+template<template<class, DType...> class IteratorClass, class T, class DSeq>
+struct filter_iterator_type;
+template<template<class, DType...> class IteratorClass, class T, DType...ds>
+struct filter_iterator_type<IteratorClass, T, dtype_seq<ds...>> { 
+	using filter_seq = typename matched_dtypes<T, dtype_seq<ds...>>::type;
+	using type = typename get_iterator_type<IteratorClass, T, filter_seq>::type;
+};
 
 
 template<DType...dtypes>
@@ -284,23 +298,26 @@ private:
 		}
 	};
 	// proxy object
-	template<class T, DType...ds>
+	template<class T>
 	class Proxy {
+	private:
+		using IteratorType = typename filter_iterator_type<
+			Iterator, T, dtype_seq<dtypes...>>::type;
 	public:
 		Proxy(Internal& internal):
 			begin_{ internal, true },
 			end_{ internal, false }
 		{}
-		Iterator<T, ds...> begin() { return begin_; }
-		Iterator<T, ds...> end() { return end_; }
+		IteratorType begin() { return begin_; }
+		IteratorType end() { return end_; }
 	private:
-		Iterator<T, ds...> const begin_;
-		Iterator<T, ds...> const end_;
+		IteratorType const begin_;
+		IteratorType const end_;
 	};
 public:
-	template<class T, DType...ds>
-	Proxy<T, ds...> iter() {
-		return Proxy<T, ds...>{ *this };
+	template<class T>
+	Proxy<T> iter() {
+		return Proxy<T>{ *this };
 	}
 };
 
