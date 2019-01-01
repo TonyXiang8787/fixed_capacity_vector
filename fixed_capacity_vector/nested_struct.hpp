@@ -220,17 +220,14 @@ private:
 	private:
 		static_assert(type_check<T, ds...>);
 		static constexpr size_t n_ds = sizeof...(ds);
-		using PtrPair = std::pair<void*, void*>;
-		using PtrDeref = T * (Iterator::*)() const;
-		using PtrIncr = void (Iterator::*)();
-		template<DType dtype>
-		T* deref() const { return (enum_t<dtype>*)ptr_;	}
-		static constexpr std::array<PtrDeref, n_ds> deref_func_{
-			&Iterator::deref<ds>...};
-		template<DType dtype>
-		void incr() { ptr_ = ((enum_t<dtype>*)ptr_) + 1; }
-		static constexpr std::array<PtrIncr, n_ds> incr_func_{
-			&Iterator::incr<ds>... };
+		static_assert(n_ds > 0);
+		using PtrPair = std::pair<char*, char*>;
+		static constexpr std::array<size_t, n_ds> offset_{
+			reinterpret_cast<size_t>(static_cast<T*>(
+				reinterpret_cast<enum_t<ds>*>(nullptr)
+				))...};
+		static constexpr std::array<size_t, n_ds> incr_{
+			sizeof(enum_t<ds>)... };
 	public:
 		using iterator_category = std::forward_iterator_tag;
 		using value_type = T;
@@ -254,7 +251,7 @@ private:
 			}
 		}
 		Iterator& operator++() {
-			(this->*incr_func_[seq_])();
+			ptr_ = ptr_ + incr_[seq_];
 			if (ptr_ == ptr_pairs_[seq_].second)
 			{
 				ptr_ = nullptr;
@@ -274,9 +271,9 @@ private:
 			return iter;
 		}
 		reference operator* () const { 
-			return *((this->*deref_func_[seq_])()); }
+			return *reinterpret_cast<T*>(ptr_ + offset_[seq_]); }
 		pointer operator->() const { 
-			return (this->*deref_func_[seq_])(); }
+			return reinterpret_cast<T*>(ptr_ + offset_[seq_]); }
 		bool operator==(Iterator const& rhs) const { 
 			return (ptr_ == rhs.ptr_) && (seq_ == rhs.seq_); }
 		bool operator!=(Iterator const& rhs) const {
@@ -284,13 +281,15 @@ private:
 	private:
 		std::array<PtrPair, n_ds> const ptr_pairs_;
 		size_t seq_{ 0 };  // sequence number
-		void* ptr_{ nullptr };  // void pointer
+		char* ptr_{ nullptr };  // void pointer
 
 		template<DType dtype>
 		PtrPair get_range(Internal& internal) {
 			if (internal.get_vec<dtype>().size() > 0)
-				return { internal.get_vec<dtype>().begin(),
-				internal.get_vec<dtype>().end() };
+				return {
+				reinterpret_cast<char*>(internal.get_vec<dtype>().begin()),
+				reinterpret_cast<char*>(internal.get_vec<dtype>().end()) 
+			};
 			return { nullptr, nullptr };
 		}
 	};
