@@ -121,14 +121,11 @@ template<template<class, DType...> class IteratorClass, class T, DType...ds>
 struct get_iterator_type<IteratorClass, T, dtype_seq<ds...>> {
 	using type = IteratorClass<T, ds...>;
 };
-template<template<class, DType...> class IteratorClass, class T, class DSeq>
-struct filter_iterator_type;
 template<template<class, DType...> class IteratorClass, class T, DType...ds>
-struct filter_iterator_type<IteratorClass, T, dtype_seq<ds...>> { 
+struct filter_iterator_type {
 	using filter_seq = typename matched_dtypes<T, dtype_seq<ds...>>::type;
 	using type = typename get_iterator_type<IteratorClass, T, filter_seq>::type;
 };
-
 
 template<DType...dtypes>
 class Input {
@@ -302,7 +299,7 @@ private:
 	class Proxy {
 	private:
 		using IteratorType = typename filter_iterator_type<
-			Iterator, T, dtype_seq<dtypes...>>::type;
+			Iterator, T, dtypes...>::type;
 	public:
 		Proxy(Internal& internal):
 			begin_{ internal, true },
