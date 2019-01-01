@@ -85,6 +85,37 @@ using all_true = std::is_same<
 	bool_pack<true, bs...>>;
 template<class T, DType...ds>
 constexpr bool type_check = all_true<is_match<T, ds>...>::value;
+// seq of dtypes
+template<DType...ds>
+using dtype_seq = std::integer_sequence<DType, ds...>;
+// add match dtypes
+template<class DSeq, class T, DType d, bool = is_match<T, d>> 
+struct add_match;
+template<DType...ds, class T, DType d>
+struct add_match<dtype_seq<ds...>, T, d, true> {
+	using type = dtype_seq<ds..., d>;
+};
+template<DType...ds, class T, DType d>
+struct add_match<dtype_seq<ds...>, T, d, false> {
+	using type = dtype_seq<ds...>;
+};
+// get match dtypes
+template<class T, class DList1, class DList2 = dtype_seq<>> 
+struct matched_dtypes;
+template<class T, DType...d2>
+struct matched_dtypes<T, dtype_seq<>, dtype_seq<d2...>> {
+	using type = dtype_seq<d2...>;
+};
+template<class T, DType d0, DType...d1, DType...d2>
+struct matched_dtypes<T, dtype_seq<d0, d1...>, dtype_seq<d2...>> {
+	using type = typename matched_dtypes<
+		dtype_seq<d1...>,
+		typename add_match<dtype_seq<d2...>, T, d0>::type
+	>::type;
+};
+
+using op = matched_dtypes<int, dtype_seq<DType::kInt>>::type;
+using op2 = add_match<dtype_seq<>, int, DType::kInt>::type;
 
 template<DType...dtypes>
 class Input {
@@ -292,6 +323,7 @@ template<class> struct TypeTrait;
 template<size_t...Ints>
 struct TypeTrait<std::index_sequence<Ints...>> {
 	using TypeBaseT = TypeBase<data_type_arr[Ints]...>;
+	using xxx = typename matched_dtypes<int, dtype_seq<data_type_arr[Ints]...>>::type
 };
 
 }
@@ -300,3 +332,5 @@ using Root = internal_trait::TypeTrait<
 	std::make_index_sequence<data_type_arr.size()>>::TypeBaseT;
 using InputMap = Root::InputMap;
 using InternalMap = Root::InternalMap;
+using xxx = internal_trait::TypeTrait<
+	std::make_index_sequence<data_type_arr.size()>>::xxx;
