@@ -109,13 +109,12 @@ struct matched_dtypes<T, dtype_seq<>, dtype_seq<d2...>> {
 template<class T, DType d0, DType...d1, DType...d2>
 struct matched_dtypes<T, dtype_seq<d0, d1...>, dtype_seq<d2...>> {
 	using type = typename matched_dtypes<
+		T,
 		dtype_seq<d1...>,
 		typename add_match<dtype_seq<d2...>, T, d0>::type
 	>::type;
 };
 
-using op = matched_dtypes<int, dtype_seq<DType::kInt>>::type;
-using op2 = add_match<dtype_seq<>, int, DType::kInt>::type;
 
 template<DType...dtypes>
 class Input {
@@ -323,7 +322,6 @@ template<class> struct TypeTrait;
 template<size_t...Ints>
 struct TypeTrait<std::index_sequence<Ints...>> {
 	using TypeBaseT = TypeBase<data_type_arr[Ints]...>;
-	using xxx = typename matched_dtypes<int, dtype_seq<data_type_arr[Ints]...>>::type
 };
 
 }
@@ -332,5 +330,3 @@ using Root = internal_trait::TypeTrait<
 	std::make_index_sequence<data_type_arr.size()>>::TypeBaseT;
 using InputMap = Root::InputMap;
 using InternalMap = Root::InternalMap;
-using xxx = internal_trait::TypeTrait<
-	std::make_index_sequence<data_type_arr.size()>>::xxx;
