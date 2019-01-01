@@ -174,25 +174,22 @@ private:
 	}
 private:
 	// iterator
-	template<class T>
+	template<class T, DType...ds>
 	class Iterator {
 	private:
+		static_assert(type_check<T, ds...>);
+		static constexpr size_t n_ds = sizeof...(ds);
 		using PtrPair = std::pair<void*, void*>;
 		using PtrDeref = T * (Iterator::*)() const;
 		using PtrIncr = void (Iterator::*)();
-		static constexpr std::array<bool, n_types> enable_vec_{
-			is_match<T, dtypes>...};
 		template<DType dtype>
-		T* deref() const {
-			if constexpr (is_match<T, dtype>) return (enum_t<dtype>*)ptr_;
-			else return nullptr;
-		}
-		static constexpr std::array<PtrDeref, n_types> deref_func_{
-			&Iterator::deref<dtypes>...};
+		T* deref() const { return (enum_t<dtype>*)ptr_;	}
+		static constexpr std::array<PtrDeref, n_ds> deref_func_{
+			&Iterator::deref<ds>...};
 		template<DType dtype>
 		void incr() { ptr_ = ((enum_t<dtype>*)ptr_) + 1; }
-		static constexpr std::array<PtrIncr, n_types> incr_func_{
-			&Iterator::incr<dtypes>... };
+		static constexpr std::array<PtrIncr, n_ds> incr_func_{
+			&Iterator::incr<ds>... };
 	public:
 		using iterator_category = std::forward_iterator_tag;
 		using value_type = T;
@@ -201,10 +198,10 @@ private:
 		using reference = T&;
 		Iterator() : ptr_pairs_{} {}
 		Iterator(Internal& internal, bool is_begin):
-			ptr_pairs_{ get_range<dtypes>(internal)... }
+			ptr_pairs_{ get_range<ds>(internal)... }
 		{
 			if (is_begin) {
-				for (; seq_ < n_types; seq_++) {
+				for (; seq_ < n_ds; seq_++) {
 					if (ptr_pairs_[seq_].first) {
 						ptr_ = ptr_pairs_[seq_].first;
 						return;
@@ -212,7 +209,7 @@ private:
 				}
 			}
 			else {
-				seq_ = n_types;
+				seq_ = n_ds;
 			}
 		}
 		Iterator& operator++() {
@@ -221,7 +218,7 @@ private:
 			{
 				ptr_ = nullptr;
 				seq_++;
-				for (; seq_ < n_types; seq_++) {
+				for (; seq_ < n_ds; seq_++) {
 					if (ptr_pairs_[seq_].first) {
 						ptr_ = ptr_pairs_[seq_].first;
 						break;
@@ -244,37 +241,36 @@ private:
 		bool operator!=(Iterator const& rhs) const {
 			return !(*this == rhs);	}
 	private:
-		std::array<PtrPair, n_types> const ptr_pairs_;
+		std::array<PtrPair, n_ds> const ptr_pairs_;
 		size_t seq_{ 0 };  // sequence number
 		void* ptr_{ nullptr };  // void pointer
 
 		template<DType dtype>
 		PtrPair get_range(Internal& internal) {
-			if constexpr (is_match<T, dtype>)
-				if (internal.get_vec<dtype>().size() > 0)
-					return { internal.get_vec<dtype>().begin(),
-					internal.get_vec<dtype>().end() };
+			if (internal.get_vec<dtype>().size() > 0)
+				return { internal.get_vec<dtype>().begin(),
+				internal.get_vec<dtype>().end() };
 			return { nullptr, nullptr };
 		}
 	};
 	// proxy object
-	template<class T>
+	template<class T, DType...ds>
 	class Proxy {
 	public:
 		Proxy(Internal& internal):
 			begin_{ internal, true },
 			end_{ internal, false }
 		{}
-		Iterator<T> begin() { return begin_; }
-		Iterator<T> end() { return end_; }
+		Iterator<T, ds...> begin() { return begin_; }
+		Iterator<T, ds...> end() { return end_; }
 	private:
-		Iterator<T> const begin_;
-		Iterator<T> const end_;
+		Iterator<T, ds...> const begin_;
+		Iterator<T, ds...> const end_;
 	};
 public:
-	template<class T>
-	Proxy<T> iter() {
-		return Proxy<T>{ *this };
+	template<class T, DType...ds>
+	Proxy<T, ds...> iter() {
+		return Proxy<T, ds...>{ *this };
 	}
 };
 

@@ -86,9 +86,9 @@ void test_struct() {
 	std::cout << internal_map.get_item<C>(9)->x << '\n';
 	std::cout << internal_map.get_item<C2>(8)->y << '\n';
 	std::cout << internal_map.get_item<C2>(9)->y << '\n';
-	for (C& c : internal_map.iter<C>())
+	for (C& c : internal_map.iter<C, DType::kC1, DType::kC2>())
 		std::cout << c.x << '\n';
-	for (int& x : internal_map.iter<int>())
+	for (int& x : internal_map.iter<int, DType::kInt, DType::kInt32>())
 		std::cout << x << '\n';
 }
 
