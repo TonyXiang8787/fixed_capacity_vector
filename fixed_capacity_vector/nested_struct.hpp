@@ -222,9 +222,9 @@ private:
 		static constexpr size_t n_ds = sizeof...(ds);
 		static_assert(n_ds > 0);
 		using PtrPair = std::pair<char*, char*>;
-		static constexpr std::array<size_t, n_ds> offset_{
+		inline static const std::array<size_t, n_ds> offset_{
 			reinterpret_cast<size_t>(static_cast<T*>(
-				reinterpret_cast<enum_t<ds>*>(nullptr)
+				reinterpret_cast<enum_t<ds>*>(0)
 				))...};
 		static constexpr std::array<size_t, n_ds> incr_{
 			sizeof(enum_t<ds>)... };
